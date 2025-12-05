@@ -1,6 +1,6 @@
 # vantajs-365
 
-Vibe Coding 練習 Vanta.js - 一個基於 Three.js 的 3D 背景效果互動演示應用
+Vibe Coding 練習 Vanta.js - 一個基於 Three.js 的 3D 背景效果互動演示應用，使用 Gemini Canvas 製作。
 
 ## 🎨 概述
 
@@ -158,9 +158,5 @@ index.html
 ## 📄 許可證
 
 此專案為 Vibe Coding 練習項目
+- [Gemini Canvas Prompt](https://gemini.google.com/share/62a89cb205dd)
 
-## 🙏 致謝
-
-- [Vanta.js](https://www.vantajs.com/) - 3D 背景效果庫
-- [Three.js](https://threejs.org/) - 3D 圖形庫
-- [Tailwind CSS](https://tailwindcss.com/) - CSS 框架
