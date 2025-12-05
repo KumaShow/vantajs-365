@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vanta.js 互動演示與設定</title>
+    <!-- Tailwind CSS for UI styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Three.js (降級至 r121 以支援 Birds 效果) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r121/three.min.js"></script>
+    
+    <!-- Vanta.js Effects Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.net.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.birds.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanta/0.5.24/vanta.waves.min.js"></script>
+    
+    <style>
+        body, html {
+            height: 100%;
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        #vanta-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+        /* 自定義滾動條 */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        /* 設定面板樣式 */
+        .settings-panel {
+            backdrop-filter: blur(10px);
+            background: rgba(0, 0, 0, 0.7);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .settings-panel.closed {
+            transform: translateX(100%);
+        }
+        input[type="range"] {
+            accent-color: #2dd4bf; /* Tailwind teal-400 */
+        }
+        /* 數值標籤動畫 */
+        .value-tag {
+            transition: all 0.2s;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-white">
+
+    <!-- Vanta 背景容器 -->
+    <div id="vanta-bg"></div>
+
+    <!-- 設定面板開關按鈕 -->
+    <button id="toggle-btn" class="fixed top-4 right-4 z-50 p-2 bg-slate-800/80 rounded-full hover:bg-teal-600 transition-colors border border-white/20 shadow-lg">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+        </svg>
+    </button>
+
+    <!-- 設定面板 -->
+    <div id="settings-panel" class="settings-panel fixed top-0 right-0 h-full w-80 z-40 p-6 overflow-y-auto shadow-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-teal-300 tracking-wide">效果設定</h2>
+            <button id="close-btn" class="text-gray-400 hover:text-white transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+
+        <!-- 效果選擇 -->
+        <div class="mb-8 space-y-2">
+            <label class="block text-xs font-bold text-gray-400 uppercase tracking-wider">選擇效果</label>
+            <div class="relative">
+                <select id="effect-select" class="w-full bg-slate-800 border border-slate-600 rounded-lg py-2 pl-3 pr-10 text-white focus:ring-2 focus:ring-teal-500 focus:outline-none appearance-none cursor-pointer hover:border-teal-500 transition-colors">
+                    <option value="net">Net (科技網狀)</option>
+                    <option value="birds">Birds (群鳥飛舞)</option>
+                    <option value="waves">Waves (流動波浪)</option>
+                </select>
+                <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white">
+                    <svg class="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <hr class="border-gray-700 mb-6">
+
+        <!-- 動態參數區 -->
+        <div id="dynamic-controls" class="space-y-6">
+            <!-- 這裡會由 JavaScript 動態生成 -->
+        </div>
+        
+        <div class="mt-8 text-xs text-gray-500 text-center border-t border-gray-700 pt-4">
+            <p class="mb-1 text-teal-500 font-semibold">💡 操作提示</p>
+            <p>顏色與速度：<span class="text-white">即時生效</span></p>
+            <p>數量與大小：<span class="text-white">放開後生效</span></p>
+        </div>
+    </div>
+
+    <!-- 主要內容 -->
+    <div class="relative z-10 pointer-events-none h-full w-full flex flex-col items-center justify-center p-6">
+        <div class="max-w-2xl text-center space-y-6">
+            <h1 class="text-5xl md:text-7xl font-bold drop-shadow-lg text-white tracking-tight">
+                Vanta.js
+            </h1>
+            <p class="text-xl text-gray-200 drop-shadow-md font-light">
+                即時互動 3D 背景
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let vantaEffect = null;
+        let currentEffectName = 'net';
+
+        // 配置：定義每個參數是否需要重新渲染 (reload: true)
+        const effectsConfig = {
+            'net': {
+                library: VANTA.NET,
+                defaults: {
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00
+                },
+                controls: [
+                    { id: 'color', label: '線條顏色', type: 'color', default: '#3fffcf', reload: false },
+                    { id: 'backgroundColor', label: '背景顏色', type: 'color', default: '#0f172a', reload: false },
+                    { id: 'points', label: '密度 (Points)', type: 'range', min: 5, max: 20, step: 1, default: 12, reload: true }, // 結構改變需重繪
+                    { id: 'maxDistance', label: '連線距離', type: 'range', min: 10, max: 40, step: 1, default: 22, reload: false },
+                    { id: 'spacing', label: '空間感', type: 'range', min: 10, max: 30, step: 1, default: 18, reload: false }
+                ]
+            },
+            'birds': {
+                library: VANTA.BIRDS,
+                defaults: {
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00
+                },
+                controls: [
+                    { id: 'backgroundColor', label: '背景顏色', type: 'color', default: '#0f172a', reload: false },
+                    { id: 'color1', label: '鳥顏色 A', type: 'color', default: '#ff4949', reload: false },
+                    { id: 'color2', label: '鳥顏色 B', type: 'color', default: '#1941ff', reload: false },
+                    { id: 'quantity', label: '數量 (Quantity)', type: 'range', min: 1, max: 5, step: 1, default: 3, reload: true }, // 結構改變需重繪
+                    { id: 'birdSize', label: '大小 (Size)', type: 'range', min: 0.5, max: 4, step: 0.1, default: 1.5, reload: true }, // 結構改變需重繪
+                    { id: 'speedLimit', label: '速度 (Speed)', type: 'range', min: 1, max: 9, step: 1, default: 4, reload: false }
+                ]
+            },
+            'waves': {
+                library: VANTA.WAVES,
+                defaults: {
+                    mouseControls: true,
+                    touchControls: true,
+                    gyroControls: false,
+                    minHeight: 200.00,
+                    minWidth: 200.00,
+                    scale: 1.00,
+                    scaleMobile: 1.00
+                },
+                controls: [
+                    { id: 'color', label: '波浪顏色', type: 'color', default: '#113355', reload: false },
+                    { id: 'shininess', label: '光澤度', type: 'range', min: 0, max: 150, step: 1, default: 35, reload: false },
+                    { id: 'waveHeight', label: '波浪高度', type: 'range', min: 5, max: 40, step: 1, default: 20, reload: false },
+                    { id: 'waveSpeed', label: '波動速度', type: 'range', min: 0.1, max: 2, step: 0.1, default: 0.8, reload: false },
+                    { id: 'zoom', label: '縮放 (Zoom)', type: 'range', min: 0.6, max: 1.8, step: 0.1, default: 1, reload: false }
+                ]
+            }
+        };
+
+        // UI 元素
+        const settingsPanel = document.getElementById('settings-panel');
+        const toggleBtn = document.getElementById('toggle-btn');
+        const closeBtn = document.getElementById('close-btn');
+        const effectSelect = document.getElementById('effect-select');
+        const dynamicControlsDiv = document.getElementById('dynamic-controls');
+
+        let currentOptions = {};
+
+        // 輔助函式：確保顏色是整數格式 (0xffffff)
+        function normalizeOptions(options) {
+            const normalized = { ...options };
+            for (const key in normalized) {
+                const val = normalized[key];
+                if (typeof val === 'string' && val.startsWith('#')) {
+                    normalized[key] = parseInt(val.replace('#', '0x'), 16);
+                }
+            }
+            return normalized;
+        }
+
+        function init() {
+            renderControls('net');
+            applyEffect('net');
+
+            toggleBtn.addEventListener('click', () => settingsPanel.classList.toggle('closed'));
+            closeBtn.addEventListener('click', () => settingsPanel.classList.add('closed'));
+
+            effectSelect.addEventListener('change', (e) => {
+                const selectedEffect = e.target.value;
+                renderControls(selectedEffect);
+                applyEffect(selectedEffect);
+            });
+        }
+
+        function renderControls(effectName) {
+            dynamicControlsDiv.innerHTML = '';
+            const config = effectsConfig[effectName];
+            currentOptions = { ...config.defaults };
+
+            config.controls.forEach(control => {
+                currentOptions[control.id] = control.default;
+
+                const wrapper = document.createElement('div');
+                wrapper.className = 'flex flex-col space-y-2';
+
+                const labelRow = document.createElement('div');
+                labelRow.className = 'flex justify-between items-center';
+                
+                const label = document.createElement('label');
+                label.className = 'text-sm text-gray-300 font-medium';
+                label.innerText = control.label;
+
+                // 數值顯示
+                const valDisplay = document.createElement('span');
+                valDisplay.className = 'value-tag text-xs bg-slate-700 px-2 py-0.5 rounded text-teal-300 font-mono';
+                valDisplay.innerText = control.default;
+                
+                labelRow.appendChild(label);
+                if (control.type === 'range') labelRow.appendChild(valDisplay);
+                wrapper.appendChild(labelRow);
+
+                let input;
+                if (control.type === 'color') {
+                    const colorWrapper = document.createElement('div');
+                    colorWrapper.className = 'flex items-center space-x-3 bg-slate-800 p-2 rounded-lg border border-slate-700';
+                    
+                    input = document.createElement('input');
+                    input.type = 'color';
+                    input.value = control.default;
+                    input.className = 'h-8 w-10 bg-transparent border-0 cursor-pointer rounded'; 
+                    
+                    const hexText = document.createElement('span');
+                    hexText.className = 'text-xs text-gray-400 font-mono flex-1 text-right';
+                    hexText.innerText = control.default;
+
+                    // 顏色：即時生效 (input 事件)
+                    input.addEventListener('input', (e) => {
+                        hexText.innerText = e.target.value;
+                        updateOptionInstant(control.id, e.target.value);
+                    });
+
+                    colorWrapper.appendChild(input);
+                    colorWrapper.appendChild(hexText);
+                    wrapper.appendChild(colorWrapper);
+
+                } else if (control.type === 'range') {
+                    input = document.createElement('input');
+                    input.type = 'range';
+                    input.min = control.min;
+                    input.max = control.max;
+                    input.step = control.step;
+                    input.value = control.default;
+                    input.className = 'w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-teal-500/50';
+
+                    // 邏輯區分：即時 vs 重繪
+                    
+                    // 1. 拖曳時 (input)：更新數值顯示，如果是輕量參數則即時更新效果
+                    input.addEventListener('input', (e) => {
+                        const val = parseFloat(e.target.value);
+                        valDisplay.innerText = val;
+                        
+                        // 如果不需要重繪 (reload: false)，則即時更新 (setOptions)
+                        // 注意：對於 reload: true 的參數 (如 quantity)，這裡只更新 UI 數字，不呼叫 setOptions
+                        if (!control.reload) {
+                            updateOptionInstant(control.id, val);
+                        }
+                    });
+
+                    // 2. 放開時 (change)：如果是重量參數，觸發重繪 (destroy & init)
+                    input.addEventListener('change', (e) => {
+                         const val = parseFloat(e.target.value);
+                         // 確保數值寫入 (以防 input 沒觸發完整)
+                         currentOptions[control.id] = val;
+                         
+                         if (control.reload) {
+                             // 需要重繪的參數，在此時執行
+                             applyEffect(currentEffectName);
+                         }
+                    });
+
+                    wrapper.appendChild(input);
+                }
+
+                dynamicControlsDiv.appendChild(wrapper);
+            });
+        }
+
+        // 輕量更新：使用 setOptions，不銷毀
+        function updateOptionInstant(key, value) {
+            currentOptions[key] = value;
+            
+            let safeValue = value;
+            if (typeof value === 'string' && value.startsWith('#')) {
+                safeValue = parseInt(value.replace('#', '0x'), 16);
+            }
+
+            if (vantaEffect) {
+                // Vanta 通常能處理部分參數的即時更新
+                vantaEffect.setOptions({
+                    [key]: safeValue
+                });
+            }
+        }
+
+        // 重量更新：銷毀並重建
+        function applyEffect(effectName) {
+            if (vantaEffect) vantaEffect.destroy();
+
+            const config = effectsConfig[effectName];
+            const safeOptions = normalizeOptions(currentOptions);
+
+            try {
+                vantaEffect = config.library({
+                    el: "#vanta-bg",
+                    ...safeOptions
+                });
+                currentEffectName = effectName;
+            } catch (e) {
+                console.error("Vanta init error:", e);
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            if (vantaEffect) vantaEffect.resize();
+        });
+
+        window.addEventListener('load', init);
+
+    </script>
+</body>
+</html>
